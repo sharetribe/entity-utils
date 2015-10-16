@@ -6,4 +6,6 @@ Gem::Specification.new do |s|
   s.email       = 'team@sharetribe.'
   s.files       = ["lib/entity_utils.rb"]
   s.homepage    = 'https://github.com/sharetribe/entity-utils'
+
+  s.add_dependency "activesupport", ">= 3.0"
 end
