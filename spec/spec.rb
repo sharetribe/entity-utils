@@ -83,6 +83,48 @@ describe EntityUtils do
         .not_to raise_error
     end
 
+    describe "global configuration" do
+      before(:each) { EntityUtils.reset_configurations! }
+      after(:each) { EntityUtils.reset_configurations! }
+
+      it "validate defaults to true" do
+        person_entity = EntityUtils.define_builder(
+          [:sex, :to_symbol, one_of: [:m, :f]],
+        )
+
+        expect{ person_entity.call(sex: "male") }
+          .to raise_error(ArgumentError)
+      end
+
+      it "uses global configurations" do
+        EntityUtils.configure!(
+          validate: false
+        )
+
+        person_entity = EntityUtils.define_builder(
+          [:sex, :to_symbol, one_of: [:m, :f]],
+        )
+
+        expect{ person_entity.call(sex: "male") }
+          .not_to raise_error
+      end
+
+      it "local configurations override global configurations" do
+        EntityUtils.configure!(
+          validate: false
+        )
+
+        person_entity = EntityUtils.define_builder(
+          [:sex, :to_symbol, one_of: [:m, :f]],
+          validate: true
+        )
+
+        expect{ person_entity.call(sex: "male") }
+          .to raise_error(ArgumentError)
+      end
+
+    end
+
   end
 
   it "#define_builder supports nested entities" do

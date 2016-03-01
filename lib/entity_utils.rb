@@ -7,6 +7,9 @@ require 'active_support/time_with_zone'
 
 module EntityUtils
 
+  # Configurations that are set in the initializer
+  @global_configs = {}
+
   DEFAULT_CONFIGS = {
     validate: true
   }
@@ -399,7 +402,7 @@ module EntityUtils
   # See rspec tests for more examples and output
   def define_builder(*args)
     specs, opts = extract_options(args)
-    EntityBuilder.new(parse_specs(specs), default_configs(opts))
+    EntityBuilder.new(parse_specs(specs), merge_configs(opts))
   end
 
   def extract_options(args)
@@ -412,8 +415,16 @@ module EntityUtils
     end
   end
 
-  def default_configs(opts)
-    DEFAULT_CONFIGS.merge(opts || {})
+  def reset_configurations!
+    @global_configs = {}
+  end
+
+  def configure!(configs)
+    @global_configs = configs
+  end
+
+  def merge_configs(opts)
+    DEFAULT_CONFIGS.merge(@global_configs).merge(opts || {})
   end
 
   class Result < Struct.new(:success, :data, :error_msg)
