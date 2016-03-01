@@ -58,6 +58,33 @@ describe EntityUtils do
         .to raise_error(ArgumentError)
   end
 
+  describe "validate option" do
+
+    it "takes validate option as a builder parameter" do
+      person_entity = EntityUtils.define_builder(
+        [:sex, :to_symbol, one_of: [:m, :f]],
+        validate: false
+      )
+
+      expect{ person_entity.call(sex: "male") }
+        .not_to raise_error
+
+      expect(person_entity.call(sex: "male")).to eq(sex: :male)
+
+      validate_person_entity = EntityUtils.define_builder(
+        [:sex, :to_symbol, one_of: [:m, :f]],
+        validate: true
+      )
+
+      expect{ validate_person_entity.call(sex: "male") }
+        .to raise_error(ArgumentError)
+
+      expect{ validate_person_entity.call(sex: :m) }
+        .not_to raise_error
+    end
+
+  end
+
   it "#define_builder supports nested entities" do
     entity = EntityUtils.define_builder(
       [:name, :mandatory, entity: [
