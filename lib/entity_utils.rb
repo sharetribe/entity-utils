@@ -400,19 +400,12 @@ module EntityUtils
   # )
   #
   # See rspec tests for more examples and output
-  def define_builder(*args)
-    specs, opts = extract_options(args)
-    EntityBuilder.new(parse_specs(specs), merge_configs(opts))
+  def define_builder(*specs)
+    EntityBuilder.new(parse_specs(specs), merge_configs({}))
   end
 
-  def extract_options(args)
-    last = args.last
-
-    if last.is_a?(Hash)
-      [args.first(args.size - 1), last]
-    else
-      [args, nil]
-    end
+  def define_builder_validate_always(*specs)
+    EntityBuilder.new(parse_specs(specs), merge_configs(validate: true))
   end
 
   def reset_configurations!

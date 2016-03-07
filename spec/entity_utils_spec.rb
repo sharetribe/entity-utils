@@ -58,45 +58,33 @@ describe EntityUtils do
         .to raise_error(ArgumentError)
   end
 
-  describe "validate option" do
+  describe "running validations" do
 
-    it "takes validate option as a builder parameter" do
-      person_entity = EntityUtils.define_builder(
-        [:sex, :to_symbol, one_of: [:m, :f]],
-        validate: false
-      )
+    before(:each) { EntityUtils.reset_configurations! }
+    after(:each) { EntityUtils.reset_configurations! }
 
-      expect{ person_entity.call(sex: "male") }
-        .not_to raise_error
+    describe "#define_builder_validate_always" do
 
-      expect(person_entity.call(sex: "male")).to eq(sex: :male)
+      it "always runs validations" do
+        EntityUtils.configure!(
+          validate: false
+        )
 
-      validate_person_entity = EntityUtils.define_builder(
-        [:sex, :to_symbol, one_of: [:m, :f]],
-        validate: true
-      )
-
-      expect{ validate_person_entity.call(sex: "male") }
-        .to raise_error(ArgumentError)
-
-      expect{ validate_person_entity.call(sex: :m) }
-        .not_to raise_error
-    end
-
-    describe "global configuration" do
-      before(:each) { EntityUtils.reset_configurations! }
-      after(:each) { EntityUtils.reset_configurations! }
-
-      it "validate defaults to true" do
-        person_entity = EntityUtils.define_builder(
+        person_entity = EntityUtils.define_builder_validate_always(
           [:sex, :to_symbol, one_of: [:m, :f]],
         )
 
         expect{ person_entity.call(sex: "male") }
           .to raise_error(ArgumentError)
-      end
 
-      it "uses global configurations" do
+        expect{ person_entity.call(sex: :m) }
+          .not_to raise_error
+      end
+    end
+
+    describe "#define_builder" do
+
+      it "skips validations if global `validate` configuration is false" do
         EntityUtils.configure!(
           validate: false
         )
@@ -107,24 +95,24 @@ describe EntityUtils do
 
         expect{ person_entity.call(sex: "male") }
           .not_to raise_error
+
+        # Runs transformers
+        expect(person_entity.call(sex: "male")).to eq(sex: :male)
       end
 
-      it "local configurations override global configurations" do
+      it "runs validations if global `validate` configuration is true" do
         EntityUtils.configure!(
-          validate: false
+          validate: true
         )
 
         person_entity = EntityUtils.define_builder(
           [:sex, :to_symbol, one_of: [:m, :f]],
-          validate: true
         )
 
         expect{ person_entity.call(sex: "male") }
           .to raise_error(ArgumentError)
       end
-
     end
-
   end
 
   it "#define_builder supports nested entities" do
