@@ -58,6 +58,63 @@ describe EntityUtils do
         .to raise_error(ArgumentError)
   end
 
+  describe "running validations" do
+
+    before(:each) { EntityUtils.reset_configurations! }
+    after(:each) { EntityUtils.reset_configurations! }
+
+    describe "#define_builder_validate_always" do
+
+      it "always runs validations" do
+        EntityUtils.configure!(
+          validate: false
+        )
+
+        person_entity = EntityUtils.define_builder_validate_always(
+          [:sex, :to_symbol, one_of: [:m, :f]],
+        )
+
+        expect{ person_entity.call(sex: "male") }
+          .to raise_error(ArgumentError)
+
+        expect{ person_entity.call(sex: :m) }
+          .not_to raise_error
+      end
+    end
+
+    describe "#define_builder" do
+
+      it "skips validations if global `validate` configuration is false" do
+        EntityUtils.configure!(
+          validate: false
+        )
+
+        person_entity = EntityUtils.define_builder(
+          [:sex, :to_symbol, one_of: [:m, :f]],
+        )
+
+        expect{ person_entity.call(sex: "male") }
+          .not_to raise_error
+
+        # Runs transformers
+        expect(person_entity.call(sex: "male")).to eq(sex: :male)
+      end
+
+      it "runs validations if global `validate` configuration is true" do
+        EntityUtils.configure!(
+          validate: true
+        )
+
+        person_entity = EntityUtils.define_builder(
+          [:sex, :to_symbol, one_of: [:m, :f]],
+        )
+
+        expect{ person_entity.call(sex: "male") }
+          .to raise_error(ArgumentError)
+      end
+    end
+  end
+
   it "#define_builder supports nested entities" do
     entity = EntityUtils.define_builder(
       [:name, :mandatory, entity: [

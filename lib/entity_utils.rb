@@ -7,6 +7,13 @@ require 'active_support/time_with_zone'
 
 module EntityUtils
 
+  # Configurations that are set in the initializer
+  @global_configs = {}
+
+  DEFAULT_CONFIGS = {
+    validate: true
+  }
+
   module HashUtils
     module_function
 
@@ -336,9 +343,15 @@ module EntityUtils
     end
   end
 
-  def transform_and_validate(fields, input)
+  def transform_and_validate(fields, input, opts)
     output = transform_all(fields, input)
-    errors = validate_all(fields, output)
+
+    errors =
+      if opts[:validate] == false
+        []
+      else
+        validate_all(fields, output)
+      end
 
     {value: output, errors: errors}
   end
@@ -388,7 +401,23 @@ module EntityUtils
   #
   # See rspec tests for more examples and output
   def define_builder(*specs)
-    EntityBuilder.new(parse_specs(specs))
+    EntityBuilder.new(parse_specs(specs), with_defaults({}))
+  end
+
+  def define_builder_validate_always(*specs)
+    EntityBuilder.new(parse_specs(specs), with_defaults(validate: true))
+  end
+
+  def reset_configurations!
+    @global_configs = {}
+  end
+
+  def configure!(configs)
+    @global_configs = configs
+  end
+
+  def with_defaults(opts)
+    DEFAULT_CONFIGS.merge(@global_configs).merge(opts || {})
   end
 
   class Result < Struct.new(:success, :data, :error_msg)
@@ -397,13 +426,15 @@ module EntityUtils
   class EntityBuilder
     attr_reader :specs
 
-    def initialize(specs)
+    def initialize(specs, opts)
       @specs = specs
+      @opts = opts
     end
 
     def build(data)
       with_result(
         specs: @specs,
+        opts: @opts,
         data: data,
         on_success: ->(result) {
           result[:value]
@@ -420,6 +451,7 @@ module EntityUtils
     def validate(data)
       with_result(
         specs: @specs,
+        opts: @opts,
         data: data,
         on_success: ->(result) {
           Result.new(true, result[:value])
@@ -445,9 +477,9 @@ module EntityUtils
       }.join(", ")
     end
 
-    def with_result(specs:, data:, on_success:, on_failure:)
+    def with_result(specs:, opts:, data:, on_success:, on_failure:)
       raise(TypeError, "Expecting an input hash. You gave: #{data}") unless data.is_a? Hash
-      result = EntityUtils.transform_and_validate(specs, data)
+      result = EntityUtils.transform_and_validate(specs, data, opts)
 
       if result[:errors].empty?
         on_success.call(result)
