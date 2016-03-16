@@ -401,11 +401,11 @@ module EntityUtils
   #
   # See rspec tests for more examples and output
   def define_builder(*specs)
-    EntityBuilder.new(parse_specs(specs), merge_configs({}))
+    EntityBuilder.new(parse_specs(specs), with_defaults({}))
   end
 
   def define_builder_validate_always(*specs)
-    EntityBuilder.new(parse_specs(specs), merge_configs(validate: true))
+    EntityBuilder.new(parse_specs(specs), with_defaults(validate: true))
   end
 
   def reset_configurations!
@@ -416,7 +416,7 @@ module EntityUtils
     @global_configs = configs
   end
 
-  def merge_configs(opts)
+  def with_defaults(opts)
     DEFAULT_CONFIGS.merge(@global_configs).merge(opts || {})
   end
 
