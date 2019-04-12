@@ -108,7 +108,7 @@ module EntityUtils
       end
     },
     fixnum: -> (_, v, _) {
-      unless (v.nil? || v.is_a?(Fixnum))
+      unless (v.nil? || v.is_a?(Integer))
         {code: :fixnum, msg: "Value must be a Fixnum. Was: #{v} (#{v.class.name})." }
       end
     },
